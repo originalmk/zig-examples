@@ -106,6 +106,20 @@ const Matrix = struct {
         return result;
     }
 
+    pub fn neg(self: Matrix, allocator: std.mem.Allocator) !Matrix {
+        var result: Matrix = try Matrix.init(
+            allocator,
+            self.dimensions,
+            self.numbers,
+        );
+
+        for (0.., self.numbers) |idx, num| {
+            result.numbers[idx] = -num;
+        }
+
+        return result;
+    }
+
     pub fn deinit(self: Matrix) void {
         self.allocator.free(self.numbers);
     }
@@ -114,7 +128,8 @@ const Matrix = struct {
 pub fn main() void {
     const help_text =
         \\Please use 'zig build test --summary all' to run tests.
-        \\This example does not have any other runnable code.\n"
+        \\This example does not have any other runnable code.
+        \\
     ;
 
     std.debug.print(help_text, .{});
@@ -208,4 +223,20 @@ test "matrix sub" {
     try std.testing.expect(mat3.numbers[1] == -1);
     try std.testing.expect(mat3.numbers[2] == -1);
     try std.testing.expect(mat3.numbers[3] == -1);
+}
+
+test "matrix neg" {
+    const mat = try Matrix.init(
+        std.testing.allocator,
+        &.{ 3, 3 },
+        &.{ 1, -2, 3, -4, 5, -6, 7, -8, 9 },
+    );
+    defer mat.deinit();
+
+    const mat_neg = try Matrix.neg(mat, std.testing.allocator);
+    defer mat_neg.deinit();
+
+    const expected_numbers: []const i64 = &.{ -1, 2, -3, 4, -5, 6, -7, 8, -9 };
+
+    try std.testing.expect(std.mem.eql(i64, mat_neg.numbers, expected_numbers));
 }
