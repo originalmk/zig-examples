@@ -208,6 +208,13 @@ const Matrix = struct {
         );
     }
 
+    pub fn eql(self: Matrix, other: Matrix) bool {
+        const dimEqual = (self.cols == other.cols) and (self.rows == other.rows);
+        const numEqual = std.mem.eql(i64, self.numbers, other.numbers);
+
+        return dimEqual and numEqual;
+    }
+
     pub fn deinit(self: Matrix) void {
         self.allocator.free(self.numbers);
     }
@@ -401,4 +408,42 @@ test "matrix mul" {
     try std.testing.expect(try mat3.get(.{ 0, 1 }) == 28);
     try std.testing.expect(try mat3.get(.{ 1, 0 }) == 49);
     try std.testing.expect(try mat3.get(.{ 1, 1 }) == 64);
+}
+
+test "matrix eql" {
+    const mat1 = try Matrix.init(
+        std.testing.allocator,
+        2,
+        3,
+        &.{ 1, 2, 3, 4, 5, 6 },
+    );
+    defer mat1.deinit();
+
+    const mat2 = try Matrix.init(
+        std.testing.allocator,
+        2,
+        3,
+        &.{ 1, 2, 3, 4, 5, 6 },
+    );
+    defer mat2.deinit();
+
+    const mat3 = try Matrix.init(
+        std.testing.allocator,
+        3,
+        2,
+        &.{ 1, 2, 3, 4, 5, 6 },
+    );
+    defer mat3.deinit();
+
+    try std.testing.expect(mat1.eql(mat1));
+    try std.testing.expect(mat2.eql(mat2));
+    try std.testing.expect(mat3.eql(mat3));
+
+    try std.testing.expect(mat1.eql(mat2));
+    try std.testing.expect(mat2.eql(mat1));
+
+    try std.testing.expect(!mat1.eql(mat3));
+    try std.testing.expect(!mat2.eql(mat3));
+    try std.testing.expect(!mat3.eql(mat1));
+    try std.testing.expect(!mat3.eql(mat2));
 }
